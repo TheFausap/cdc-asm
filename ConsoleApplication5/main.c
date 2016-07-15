@@ -331,6 +331,7 @@ char* convOpcode(char opc[], char arg[]) {
 	int isB = 0;
 	int isX = 0;
 	int ic = 0;
+	int cB = 0;
 
 	int i = 0;
 
@@ -519,7 +520,29 @@ char* convOpcode(char opc[], char arg[]) {
 			return l_res;
 		}
 		else if (memcmp(t_opc, "NE", 2) == 0) {
-			return PS;
+			arg_parsed = check_arg_comm(arg);
+			for (i = 0; i < arg_parsed[0].n; i++) {
+				if (arg_parsed[i].t == 'B') {
+					cB++;
+					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+				}
+				else {
+					if (cB == 1) {
+						strcat(t_res, ZERO3, 3);
+						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+					}
+					else if (cB == 0) {
+						strcat(t_res, ZERO6, 6);
+						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+					}
+					else {
+						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+					}
+				}
+			}
+			strcat(l_res, tobinstr(EQ, 6));
+			strcat(l_res, t_res);
+			return l_res;
 		}
 		else if (memcmp(t_opc, "JP", 2) == 0) {
 			return JP;
@@ -540,16 +563,29 @@ char* convOpcode(char opc[], char arg[]) {
 		}
 		else if ((memcmp(t_opc, "NZ", 2) == 0)) {
 			arg_parsed = check_arg_comm(arg);
+			isX = 0;
+			isB = 0;
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'X') {
+					isX = 1;
 					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+				} 
+				else if (arg_parsed[i].t == 'B') {
+					isB = 1;
+					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+					strcat(t_res, ZERO3);
 				}
 				else {
 					strcat(t_res, tobinstr(arg_parsed[i].v, 18));
 				}
 			}
-			strcat(l_res, tobinstr(NZ, 9));
-			strcat(l_res, t_res);
+			if (isX) {
+				strcat(l_res, tobinstr(NZ, 9));
+			}
+			else {
+				strcat(l_res, tobinstr(NE, 6));
+			}
+				strcat(l_res, t_res);
 			return l_res;
 		}
 		else if ((memcmp(t_opc, "ZR", 2) == 0)) {
@@ -581,7 +617,29 @@ char* convOpcode(char opc[], char arg[]) {
 			return l_res;
 		}
 		else if (memcmp(t_opc, "EQ", 2) == 0) {
-			return EQ;
+			arg_parsed = check_arg_comm(arg);
+			for (i = 0; i < arg_parsed[0].n; i++) {
+				if (arg_parsed[i].t == 'B') {
+					cB++;
+					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+				}
+				else {
+					if (cB == 1) {
+						strcat(t_res, ZERO3, 3);
+						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+					}
+					else if (cB == 0) {
+						strcat(t_res, ZERO6, 6);
+						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+					}
+					else {
+						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+					}
+				}
+			}
+			strcat(l_res, tobinstr(EQ, 6));
+			strcat(l_res, t_res);
+			return l_res;
 		}
 		else if (memcmp(t_opc, "IX", 2) == 0) {
 			return IX;
@@ -684,27 +742,27 @@ int main() {
 				memTable[numLabels] = START_ADDRESS + numLabels;
 				numLabels++;
 			}
-			printf("LAB (len : %d) is : %s, poiting at address : %d\n", strlen(label), label, memLabel(label));
+			printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
 		}
-		printf("OPC (len : %d) is : %s|\n", strlen(opcode), opcode);
+		printf("OPC (len : %zd) is : %s|\n", strlen(opcode), opcode);
 
 		if (noArg) {
 			printf("NO ARGUMENT\n");
 			c_opc = convOpcode(opcode, NULL);
 			printf("Translated opcode: %s\n", c_opc);
-			printf("Opcode length: %d\n", strlen(c_opc));
+			printf("Opcode length: %zd\n", strlen(c_opc));
 		}
 		else {
-			printf("ARG (len : %d) is : %s|\n", strlen(argument), argument);
+			printf("ARG (len : %zd) is : %s|\n", strlen(argument), argument);
 			c_opc = convOpcode(opcode, argument);
 			printf("Translated opcode: %s\n", c_opc);
-			printf("Opcode length: %d\n", strlen(c_opc));
+			printf("Opcode length: %zd\n", strlen(c_opc));
 		}
 		if (noComment) {
 			printf("NO COMMENT\n");
 		}
 		else {
-			printf("COM (len : %d) is : %s|\n", strlen(comment), comment);
+			printf("COM (len : %zd) is : %s|\n", strlen(comment), comment);
 		}
 		printf("%%%%%%%%%%%%%%%%%%%%%%\n");
 
