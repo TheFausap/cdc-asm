@@ -438,77 +438,195 @@ char* convOpcode(char opc[], char arg[]) {
 		}
 		else if (memcmp(t_opc, "SB", 2) == 0) {
 			arg_parsed = check_arg_plus(arg);
-			memcpy(t_idx, opc + 2, 1);
-			if (arg_parsed[0].n == 0) {
-				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 */
-					strcat(l_res, tobinstr(SB + 1, 6));
+			memcpy(t_idx, opc + 2, 1);     // SAi
+			if (arg_parsed[0].n == 1) {
+				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 : SAi [B0] + K*/
+					strcat(l_res, tobinstr(SA + 1, 6));
 					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
-					strcat(l_res, tobinstr(arg_parsed[i].v, 18));
+					strcat(l_res, ZERO3);
+					strcat(l_res, tobinstr(arg_parsed[0].v, 18));
 				}
 				else {
-					if (arg_parsed[0].t == 'A') {
-						strcat(l_res, tobinstr(SB, 6));
+					if (arg_parsed[0].t == 'A') { // SAi Aj + [B0]
+						strcat(l_res, tobinstr(SA + 4, 6));
 						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
-						strcat(l_res, tobinstr(arg_parsed[i].v, 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
+					}
+					else if (arg_parsed[0].t == 'B') { // SAi [B0] + Bk
+						strcat(l_res, tobinstr(SA + 6, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, ZERO3);
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+					}
+					else if (arg_parsed[0].t == 'X') { // SAi Xj + [B0]
+						strcat(l_res, tobinstr(SA + 3, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
 					}
 				}
 				return l_res;
 			}
-			else { /* there two operands */
-
+			else { /* there are two operands */
 				for (i = 0; i < arg_parsed[0].n; i++) {
 					if (arg_parsed[i].t == 'K') {
-						add_opc = 1;
-						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+						isK = 1;
+						strcat(k_res, tobinstr(arg_parsed[i].v, 18));
 					}
-					else {
-						if (arg_parsed[i].t == 'A') {
-							add_opc = 0;
-							strcat(t_res, tobinstr(arg_parsed[i].v, 3));
-						}
+					else if (arg_parsed[i].t == 'A') {
+						isA = 1;
+						strcat(a_res, tobinstr(arg_parsed[i].v, 3));
+					}
+					else if (arg_parsed[i].t == 'B') { /* could be two B regs */
+						isB = 1;
+						strcat(b_res[ic], tobinstr(arg_parsed[i].v, 3));
+						ic++;
+					}
+					else if (arg_parsed[i].t == 'X') {
+						isX = 1;
+						strcat(x_res, tobinstr(arg_parsed[i].v, 3));
 					}
 				}
-				strcat(l_res, tobinstr(SB + add_opc, 6));
-				strcat(l_res, tobinstr(t_idx[0] - '0', 3));
-				strcat(l_res, t_res);
+				if (isA && isK) {
+					add_opc = 0;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, k_res);
+				}
+				else if (isB && isK) {
+					add_opc = 1;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isK) {
+					add_opc = 2;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isB) {
+					add_opc = 3;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isA && isB) {
+					add_opc = 4;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isB) {
+					add_opc = 6;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, b_res[1]);
+				}
 				return l_res;
 			}
 		}
 		else if (memcmp(t_opc, "SX", 2) == 0) {
 			arg_parsed = check_arg_plus(arg);
-			memcpy(t_idx, opc + 2, 1);
-			if (arg_parsed[0].n == 0) {
-				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 */
-					strcat(l_res, tobinstr(SX + 1, 6));
+			memcpy(t_idx, opc + 2, 1);     // SAi
+			if (arg_parsed[0].n == 1) {
+				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 : SAi [B0] + K*/
+					strcat(l_res, tobinstr(SA + 1, 6));
 					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
-					strcat(l_res, tobinstr(arg_parsed[i].v, 18));
+					strcat(l_res, ZERO3);
+					strcat(l_res, tobinstr(arg_parsed[0].v, 18));
 				}
 				else {
-					if (arg_parsed[0].t == 'A') {
-						strcat(l_res, tobinstr(SX, 6));
+					if (arg_parsed[0].t == 'A') { // SAi Aj + [B0]
+						strcat(l_res, tobinstr(SA + 4, 6));
 						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
-						strcat(l_res, tobinstr(arg_parsed[i].v, 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
+					}
+					else if (arg_parsed[0].t == 'B') { // SAi [B0] + Bk
+						strcat(l_res, tobinstr(SA + 6, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, ZERO3);
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+					}
+					else if (arg_parsed[0].t == 'X') { // SAi Xj + [B0]
+						strcat(l_res, tobinstr(SA + 3, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
 					}
 				}
 				return l_res;
 			}
-			else { /* there two operands */
-
+			else { /* there are two operands */
 				for (i = 0; i < arg_parsed[0].n; i++) {
 					if (arg_parsed[i].t == 'K') {
-						add_opc = 1;
-						strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+						isK = 1;
+						strcat(k_res, tobinstr(arg_parsed[i].v, 18));
 					}
-					else {
-						if (arg_parsed[i].t == 'A') {
-							add_opc = 0;
-							strcat(t_res, tobinstr(arg_parsed[i].v, 3));
-						}
+					else if (arg_parsed[i].t == 'A') {
+						isA = 1;
+						strcat(a_res, tobinstr(arg_parsed[i].v, 3));
+					}
+					else if (arg_parsed[i].t == 'B') { /* could be two B regs */
+						isB = 1;
+						strcat(b_res[ic], tobinstr(arg_parsed[i].v, 3));
+						ic++;
+					}
+					else if (arg_parsed[i].t == 'X') {
+						isX = 1;
+						strcat(x_res, tobinstr(arg_parsed[i].v, 3));
 					}
 				}
-				strcat(l_res, tobinstr(SX + add_opc, 6));
-				strcat(l_res, tobinstr(t_idx[0] - '0', 3));
-				strcat(l_res, t_res);
+				if (isA && isK) {
+					add_opc = 0;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, k_res);
+				}
+				else if (isB && isK) {
+					add_opc = 1;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isK) {
+					add_opc = 2;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isB) {
+					add_opc = 3;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isA && isB) {
+					add_opc = 4;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isB) {
+					add_opc = 6;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, b_res[1]);
+				}
 				return l_res;
 			}
 		}
@@ -545,19 +663,46 @@ char* convOpcode(char opc[], char arg[]) {
 			return l_res;
 		}
 		else if (memcmp(t_opc, "JP", 2) == 0) {
-			return JP;
+			arg_parsed = check_arg_plus(arg);
+			for (i = 0; i < arg_parsed[0].n; i++) {
+				if (arg_parsed[i].t == 'B') {
+					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+				}
+				else if (arg_parsed[i].t == 'K') {
+					strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+				}
+				else {
+					strcat(t_res, "FORMAT ERROR");
+				}
+			}
+			strcat(l_res, tobinstr(JP, 6));
+			strcat(l_res, t_res);
+			return l_res;
 		}
 		else if ((memcmp(t_opc, "PL", 2) == 0)) {
 			arg_parsed = check_arg_comm(arg);
+			isX = 0;
+			isB = 0;
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'X') {
+					isX = 1;
 					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+				}
+				else if (arg_parsed[i].t == 'B') {
+					isB = 1;
+					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+					strcat(t_res, ZERO3);
 				}
 				else {
 					strcat(t_res, tobinstr(arg_parsed[i].v,18));
 				}
 			}
-			strcat(l_res, tobinstr(PL, 9));
+			if (isX) {
+				strcat(l_res, tobinstr(PL, 9));
+			}
+			else {
+				strcat(l_res, tobinstr(GE, 6));
+			}
 			strcat(l_res, t_res);
 			return l_res;
 		}
@@ -586,6 +731,20 @@ char* convOpcode(char opc[], char arg[]) {
 				strcat(l_res, tobinstr(NE, 6));
 			}
 				strcat(l_res, t_res);
+			return l_res;
+		}
+		else if ((memcmp(t_opc, "GE", 2) == 0)) {
+			arg_parsed = check_arg_comm(arg);
+			for (i = 0; i < arg_parsed[0].n; i++) {
+				if (arg_parsed[i].t == 'B') {
+					strcat(t_res, tobinstr(arg_parsed[i].v, 3));
+				}
+				else {
+					strcat(t_res, tobinstr(arg_parsed[i].v, 18));
+				}
+			}
+			strcat(l_res, tobinstr(GE, 6));
+			strcat(l_res, t_res);
 			return l_res;
 		}
 		else if ((memcmp(t_opc, "ZR", 2) == 0)) {
