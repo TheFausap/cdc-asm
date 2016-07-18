@@ -4,6 +4,7 @@
  THERE    SA2    A5+B3
           RJ     THERE
  THAT     SA3    1234
+          SX2    X3+897
           NO
           ZR     X5,THAT
           PS                PROGRAM STOP
