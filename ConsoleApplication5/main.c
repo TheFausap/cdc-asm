@@ -21,15 +21,17 @@ char comment[51] = "\0";
 char ou[255] = "\0";
 
 
+char symbTable[MAX_LABELS][10] = { "\0" }; /* max 255 labels, the address of that LABEL is in memTable at index findLabel(<label>) */
+int memTable[MAX_LABELS] = { 0 };
 
-char symbTable[MAX_LABELS][10] = { "\0" }; /* max 255 labels */
-int memTable[MAX_LABELS] = { 00 };
-
+char equTable[MAX_LABELS][30] = { "\0" }; /* max 255 EQUated constants : string fromat : <EQUNAME>|<EQUVAL> where EQUVAL is max 18bit */
+                                           /*                                                                      EQUNAME is max 9 */
 int noLabel = 1; /* boolean value */
 int noArg = 1; /* boolean value */
 int noComment = 1; /* boolean value */
 
 int numLabels = 0;
+int numEQU = 0;
 
 typedef struct {
 	char t;
@@ -67,6 +69,19 @@ int isEmpty(char t[]) {
 	return 0;
 }
 
+int isReg(char t) {
+	if (t == 'A') {
+		return 65;
+	}
+	else if (t == 'B') {
+		return 66;
+	}
+	else if (t == 'X') {
+		return 88;
+	}
+	return 0;
+}
+
 void resetReading() {
 	noLabel = 1; /* boolean value */
 	noArg = 1; /* boolean value */
@@ -87,7 +102,7 @@ int findLabel(char s1[]) {
 
 	l_s1 = strlen(s1);
 
-	for (i = 0; i < MAX_LABELS; i++) {
+	for (i = 0; i < numLabels; i++) {
 		memcpy(s2, symbTable[i], 9);
 		l_s2 = strlen(s2);
 		if (l_s1 == l_s2) {
@@ -96,6 +111,30 @@ int findLabel(char s1[]) {
 	}
 
 	return -1;
+}
+
+char* getEQU(char s1[]) {
+
+	size_t l_s1, l_s2 = 0;
+	int i = 0;
+	int pos = 0;
+	char s2[30] = "\0";
+	static char res[30] = "\0";
+	
+	l_s1 = strlen(s1);
+
+	for (i = 0; i < numEQU; i++) {
+		memcpy(s2, equTable[i], 29);
+		char* t_s2 = strtok(s2, "|");
+		l_s2 = strlen(s2);
+		if (l_s1 == l_s2) {
+			t_s2 = strtok(NULL, "|");
+			strcpy(res, t_s2);
+			return res;
+		}
+	}
+
+	return NULL;
 }
 
 int memLabel(char l[]) {
@@ -185,25 +224,34 @@ t_arg* check_arg_plus(char a[]) {
 	strcpy(part,strtok(t_a, "+"));
 	if (memcmp(part,t_a1,strlen(t_a1)) == 0) { /* no addition in the arg */
 		res[0].n = 1;
-		if ((strlen(t_a) == 2) && isalpha(t_a[0])) { /* it's a registry */
+		if ((strlen(t_a) == 2) && (isReg(t_a[0])>0)) { /* it's a registry */
 			res[0].t = t_a[0];
 			res[0].v = t_a[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(t_a);
 		}
+		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			res[0].v = getEQU(t_a);
+ 		}
 	}
 	else { /* there two parts */
 		res[0].n = 2;
-		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
+		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
 			res[0].t = part[0];
 			res[0].v = part[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
+		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			res[0].v = getEQU(t_a);
+ 		}
+
 		strcpy(part,strtok(NULL, "+")); /* the other element (max 2)*/
 		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
 			res[1].t = part[0];
@@ -865,7 +913,7 @@ int main() {
 	/* analyzing asm file */
 	while (fgets(line,sizeof line,filn) != NULL) {
 		ll = strnlen_s(line, sizeof line);
-		memcpy_s(firstCol, 1, line, 1);
+		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
 		memcpy_s(label, 8, line+1, 7);
 		for (i = 0; i < strlen(label); i++) {
 			if (isspace(label[i])) {
@@ -896,12 +944,20 @@ int main() {
 			printf("NO LABEL\n");
 		}
 		else {
-			if (findLabel(label) < 0) { // this is a new LABEL
-				memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
-				memTable[numLabels] = START_ADDRESS + numLabels;
-				numLabels++;
+			if (memcmp(opcode, "EQU", 3) != 0) {
+				if (findLabel(label) < 0) { // this is a new LABEL
+					memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
+					memTable[numLabels] = START_ADDRESS + numLabels;
+					numLabels++;
+					printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
+				}
+			} else if (getEQU(label) == NULL) { // this is an EQUated constant
+				memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
+				strcat(equTable[numEQU], "|");
+				strcat(equTable[numEQU], tobinstr(atoi(argument), 18));
+				numEQU++;
+				printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
 			}
-			printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
 		}
 		printf("OPC (len : %zd) is : %s|\n", strlen(opcode), opcode);
 
