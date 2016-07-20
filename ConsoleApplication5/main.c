@@ -366,6 +366,7 @@ char* convOpcode(char opc[], char arg[]) {
 	char b_res[2][31] = { "\0" };
 	char x_res[31] = "\0";
 	char k_res[31] = "\0";
+	char k_temp[31] = "\0";
 	char t_res[31] = "\0";
 
 	static char l_res[31]; /* long result 30 bits*/
@@ -382,6 +383,7 @@ char* convOpcode(char opc[], char arg[]) {
 	int cB = 0;
 
 	int i = 0;
+	int kVal = 0;
 
 	memset(l_res, 0, 31);
 	memcpy(t_opc, opc, 2);
@@ -422,8 +424,16 @@ char* convOpcode(char opc[], char arg[]) {
 			else { /* there are two operands */
 				for (i = 0; i < arg_parsed[0].n; i++) {
 					if (arg_parsed[i].t == 'K') {
-						isK = 1;
-						strcat(k_res, tobinstr(arg_parsed[i].v, 18));
+						if (isK == 1) { /* the other arg is a K too */
+							kVal += arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						else if (isK == 0) {
+							isK = 1;
+							kVal = arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						strcat(k_res, k_temp);
 					}
 					else if (arg_parsed[i].t == 'A') {
 						isA = 1;
@@ -519,8 +529,16 @@ char* convOpcode(char opc[], char arg[]) {
 			else { /* there are two operands */
 				for (i = 0; i < arg_parsed[0].n; i++) {
 					if (arg_parsed[i].t == 'K') {
-						isK = 1;
-						strcat(k_res, tobinstr(arg_parsed[i].v, 18));
+						if (isK == 1) { /* the other arg is a K too */
+							kVal += arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						else if (isK == 0) {
+							isK = 1;
+							kVal = arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						strcat(k_res, k_temp);
 					}
 					else if (arg_parsed[i].t == 'A') {
 						isA = 1;
@@ -616,8 +634,16 @@ char* convOpcode(char opc[], char arg[]) {
 			else { /* there are two operands */
 				for (i = 0; i < arg_parsed[0].n; i++) {
 					if (arg_parsed[i].t == 'K') {
-						isK = 1;
-						strcat(k_res, tobinstr(arg_parsed[i].v, 18));
+						if (isK == 1) { /* the other arg is a K too */
+							kVal += arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						else if (isK == 0) {
+							isK = 1;
+							kVal = arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						strcat(k_res, k_temp);
 					}
 					else if (arg_parsed[i].t == 'A') {
 						isA = 1;
