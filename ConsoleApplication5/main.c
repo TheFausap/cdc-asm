@@ -59,6 +59,12 @@ enum opcodes {
 	FX=030 /* short instruction 15bit */
 };
 
+char* removeSpace(char t[]) {
+	char* tt1 = strdup(t);
+	char* tt = strtok(tt1, " ");
+	return tt;
+}
+
 int isEmpty(char t[]) {
 	if (t[0] == '\0') {
 		return 1;
@@ -389,7 +395,10 @@ char* convOpcode(char opc[], char arg[]) {
 	memcpy(t_opc, opc, 2);
 	
 	if (arg != NULL) { /* the operand has argument */
-		if (memcmp(t_opc, "SA", 2) == 0) { // SA
+		if (memcmp(t_opc, "EQU", strlen(t_opc)) == 0) {
+			return NOOP;
+		}
+		else if (memcmp(t_opc, "SA", strlen(t_opc)) == 0) { // SA
 			arg_parsed = check_arg_plus(arg);
 			memcpy(t_idx, opc + 2, 1);     // SAi
 			if (arg_parsed[0].n == 1) {
@@ -494,7 +503,7 @@ char* convOpcode(char opc[], char arg[]) {
 				return l_res;
 			}
 		}
-		else if (memcmp(t_opc, "SB", 2) == 0) {
+		else if (memcmp(t_opc, "SB", strlen(t_opc)) == 0) {
 			arg_parsed = check_arg_plus(arg);
 			memcpy(t_idx, opc + 2, 1);     // SAi
 			if (arg_parsed[0].n == 1) {
@@ -599,7 +608,7 @@ char* convOpcode(char opc[], char arg[]) {
 				return l_res;
 			}
 		}
-		else if (memcmp(t_opc, "SX", 2) == 0) {
+		else if (memcmp(t_opc, "SX", strlen(t_opc)) == 0) {
 			arg_parsed = check_arg_plus(arg);
 			memcpy(t_idx, opc + 2, 1);     // SAi
 			if (arg_parsed[0].n == 1) {
@@ -704,7 +713,7 @@ char* convOpcode(char opc[], char arg[]) {
 				return l_res;
 			}
 		}
-		else if (memcmp(t_opc, "RJ", 2) == 0) {
+		else if (memcmp(t_opc, "RJ", strlen(t_opc)) == 0) {
 			arg_parsed = check_address(arg);
 			strcat(l_res, tobinstr(RJ, 6));
 			strcat(l_res, ZERO6);
@@ -736,7 +745,7 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if (memcmp(t_opc, "JP", 2) == 0) {
+		else if (memcmp(t_opc, "JP", strlen(t_opc)) == 0) {
 			arg_parsed = check_arg_plus(arg);
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'B') {
@@ -753,7 +762,7 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if ((memcmp(t_opc, "PL", 2) == 0)) {
+		else if ((memcmp(t_opc, "PL", strlen(t_opc)) == 0)) {
 			arg_parsed = check_arg_comm(arg);
 			isX = 0;
 			isB = 0;
@@ -780,7 +789,7 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if ((memcmp(t_opc, "NZ", 2) == 0)) {
+		else if ((memcmp(t_opc, "NZ", strlen(t_opc)) == 0)) {
 			arg_parsed = check_arg_comm(arg);
 			isX = 0;
 			isB = 0;
@@ -807,7 +816,7 @@ char* convOpcode(char opc[], char arg[]) {
 				strcat(l_res, t_res);
 			return l_res;
 		}
-		else if ((memcmp(t_opc, "GE", 2) == 0)) {
+		else if ((memcmp(t_opc, "GE", strlen(t_opc)) == 0)) {
 			arg_parsed = check_arg_comm(arg);
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'B') {
@@ -821,7 +830,7 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if ((memcmp(t_opc, "ZR", 2) == 0)) {
+		else if ((memcmp(t_opc, "ZR", strlen(t_opc)) == 0)) {
 			arg_parsed = check_arg_comm(arg);
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'X') {
@@ -835,7 +844,7 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if ((memcmp(t_opc, "NG", 2) == 0)) {
+		else if ((memcmp(t_opc, "NG", strlen(t_opc)) == 0)) {
 			arg_parsed = check_arg_comm(arg);
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'X') {
@@ -849,7 +858,7 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if (memcmp(t_opc, "EQ", 2) == 0) {
+		else if (memcmp(t_opc, "EQ", strlen(t_opc)) == 0) {
 			arg_parsed = check_arg_comm(arg);
 			for (i = 0; i < arg_parsed[0].n; i++) {
 				if (arg_parsed[i].t == 'B') {
@@ -874,51 +883,51 @@ char* convOpcode(char opc[], char arg[]) {
 			strcat(l_res, t_res);
 			return l_res;
 		}
-		else if (memcmp(t_opc, "IX", 2) == 0) {
+		else if (memcmp(t_opc, "IX", strlen(t_opc)) == 0) {
 			return IX;
 		}
-		else if (memcmp(t_opc, "FX", 2) == 0) {
+		else if (memcmp(t_opc, "FX", strlen(t_opc)) == 0) {
 			return FX;
 		}
 		return NOOP;
 	} else { /* No second operands, etc */
-		if (memcmp(t_opc, "SA", 2) == 0) {
+		if (memcmp(t_opc, "SA", strlen(t_opc)) == 0) {
 			memcpy(t_idx, opc + 2, 1);
 			return SA + (t_idx[0] - '0');
 		}
-		else if (memcmp(t_opc, "SB", 2) == 0) {
+		else if (memcmp(t_opc, "SB", strlen(t_opc)) == 0) {
 			memcpy(t_idx, opc + 2, 1);
 			return SB + (t_idx[0] - '0');
 		}
-		else if (memcmp(t_opc, "SX", 2) == 0) {
+		else if (memcmp(t_opc, "SX", strlen(t_opc)) == 0) {
 			memcpy(t_idx, opc + 2, 1);
 			return SX + (t_idx[0] - '0');
 		}
-		else if (memcmp(t_opc, "PS", 2) == 0) {
+		else if (memcmp(t_opc, "PS", strlen(t_opc)) == 0) {
 			return "000000000000000000000000000000";
 		}
-		else if (memcmp(t_opc, "NG", 2) == 0) {
+		else if (memcmp(t_opc, "NG", strlen(t_opc)) == 0) {
 			return NG;
 		}
-		else if (memcmp(t_opc, "NE", 2) == 0) {
+		else if (memcmp(t_opc, "NE", strlen(t_opc)) == 0) {
 			return PS;
 		}
-		else if (memcmp(t_opc, "JP", 2) == 0) {
+		else if (memcmp(t_opc, "JP", strlen(t_opc)) == 0) {
 			return JP;
 		}
-		else if (memcmp(t_opc, "PL", 2) == 0) {
+		else if (memcmp(t_opc, "PL", strlen(t_opc)) == 0) {
 			return PL;
 		}
-		else if (memcmp(t_opc, "EQ", 2) == 0) {
+		else if (memcmp(t_opc, "EQ", strlen(t_opc)) == 0) {
 			return EQ;
 		}
-		else if (memcmp(t_opc, "NO", 2) == 0) {
+		else if (memcmp(t_opc, "NO", strlen(t_opc)) == 0) {
 			return "100110000000000";
 		}
-		else if (memcmp(t_opc, "IX", 2) == 0) {
+		else if (memcmp(t_opc, "IX", strlen(t_opc)) == 0) {
 			return IX;
 		}
-		else if (memcmp(t_opc, "FX", 2) == 0) {
+		else if (memcmp(t_opc, "FX", strlen(t_opc)) == 0) {
 			return FX;
 		}
 		return NOOP;
@@ -928,6 +937,7 @@ int main() {
 	FILE *filn;
 	fopen_s(&filn, "test.asm", "r");
 	char* c_opc;
+	char* t_opc;
 	size_t i = 0;
 	size_t ll = 0;
 
@@ -965,12 +975,13 @@ int main() {
 		noLabel = isEmpty(label);
 		noComment = isEmpty(comment);
 		noArg = isEmpty(argument);
+		t_opc = removeSpace(opcode);
 
 		if (noLabel) {
 			printf("NO LABEL\n");
 		}
 		else {
-			if (memcmp(opcode, "EQU", 3) != 0) {
+			if (memcmp(t_opc, "EQU", strlen(t_opc)) != 0) {
 				if (findLabel(label) < 0) { // this is a new LABEL
 					memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
 					memTable[numLabels] = START_ADDRESS + numLabels;
@@ -989,13 +1000,13 @@ int main() {
 
 		if (noArg) {
 			printf("NO ARGUMENT\n");
-			c_opc = convOpcode(opcode, NULL);
+			c_opc = convOpcode(t_opc, NULL);
 			printf("Translated opcode: %s\n", c_opc);
 			printf("Opcode length: %zd\n", strlen(c_opc));
 		}
 		else {
 			printf("ARG (len : %zd) is : %s|\n", strlen(argument), argument);
-			c_opc = convOpcode(opcode, argument);
+			c_opc = convOpcode(t_opc, argument);
 			printf("Translated opcode: %s\n", c_opc);
 			printf("Opcode length: %zd\n", strlen(c_opc));
 		}
