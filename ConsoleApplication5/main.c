@@ -24,8 +24,9 @@ char ou[255] = "\0";
 char symbTable[MAX_LABELS][10] = { "\0" }; /* max 255 labels, the address of that LABEL is in memTable at index findLabel(<label>) */
 int memTable[MAX_LABELS] = { 0 };
 
-char equTable[MAX_LABELS][30] = { "\0" }; /* max 255 EQUated constants : string fromat : <EQUNAME>|<EQUVAL> where EQUVAL is max 18bit */
-                                           /*                                                                      EQUNAME is max 9 */
+char equTable[MAX_LABELS][7] = { "\0" }; /* max 255 EQUated constants : string fromat : <EQUNAME>|<EQUVAL> where EQUVAL is max 18bit */
+                                          /*                                                                      EQUNAME is max 9    */
+                                          /* STORED IN OCTAL                                                                          */
 int noLabel = 1; /* boolean value */
 int noArg = 1; /* boolean value */
 int noComment = 1; /* boolean value */
@@ -62,6 +63,11 @@ enum opcodes {
 char* removeSpace(char t[]) {
 	char* tt1 = strdup(t);
 	char* tt = strtok(tt1, " ");
+	return tt;
+}
+
+char* removeZeros(char t[]) {
+	char* tt = strrchr(t, '0');
 	return tt;
 }
 
@@ -196,15 +202,13 @@ char* tobinstr(int value, int bitsCount)
 	return output;
 }
 
-#define tobinstr tooctstring /* laziness mode on! */
-
 char* tooctstring(int value, int bitsCount) {
 	char fmt[255]="\0";
 	char bitsString[255]="\0";
 	static char res[255]="\0";
 
 	strcpy(fmt, "%0");
-	itoa(bitsCount,bitsString,10);
+	itoa((bitsCount/3),bitsString,10);
 	strcat(fmt, bitsString);
 	strcat(fmt, "o");
 	
@@ -212,6 +216,8 @@ char* tooctstring(int value, int bitsCount) {
 
 	return res;
 }
+
+#define tobinstr tooctstring /* laziness mode on! */
 
 t_arg* check_address(char a[]) { /* checks the address is specified as LABEL or number */
 	char part[13] = "\0";
@@ -239,7 +245,9 @@ t_arg* check_arg_plus(char a[]) {
 	char part[13] = "\0";
 	char t_a[13] = "\0";
 	char t_a1[13] = "\0";
+	char tt[60] = "\0";
 	static t_arg res[2];
+	char* end;
 	
 	memcpy(t_a, a, sizeof t_a);
 	memcpy(t_a1, a, sizeof t_a1);
@@ -257,7 +265,7 @@ t_arg* check_arg_plus(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = getEQU(t_a);
+			res[0].v = strtoll(getEQU(t_a),&end,0);
  		}
 	}
 	else { /* there two parts */
@@ -272,17 +280,21 @@ t_arg* check_arg_plus(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = getEQU(t_a);
+			res[0].v = strtol(getEQU(part),&end,0);
  		}
 
 		strcpy(part,strtok(NULL, "+")); /* the other element (max 2)*/
-		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
-			res[1].t = part[0];
-			res[1].v = part[1] - '0';
+		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
+			res[0].t = part[0];
+			res[0].v = part[1] - '0';
 		}
-		else { /* it's only a konstant */
-			res[1].t = 'K';
-			res[1].v = atoi(part);
+		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+			res[0].t = 'K';
+			res[0].v = atoi(part);
+		}
+		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			res[0].v = strtol(getEQU(part),&end,0);
 		}
 	}
 	
@@ -294,6 +306,7 @@ t_arg* check_arg_min(char a[]) {
 	char t_a[13] = "\0";
 	char t_a1[13] = "\0";
 	static t_arg res[2];
+	char* end;
 
 	memcpy(t_a, a, sizeof t_a);
 	memcpy(t_a1, a, sizeof t_a1);
@@ -301,33 +314,46 @@ t_arg* check_arg_min(char a[]) {
 	strcpy(part, strtok(t_a, "-"));
 	if (memcmp(part, t_a1, strlen(t_a1)) == 0) { /* no addition in the arg */
 		res[0].n = 1;
-		if ((strlen(t_a) == 2) && isalpha(t_a[0])) { /* it's a registry */
+		if ((strlen(t_a) == 2) && (isReg(t_a[0])>0)) { /* it's a registry */
 			res[0].t = t_a[0];
 			res[0].v = t_a[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(t_a);
+		}
+		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			res[0].v = strtol(getEQU(t_a),&end,0);
 		}
 	}
 	else { /* there two parts */
 		res[0].n = 2;
-		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
+		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
 			res[0].t = part[0];
 			res[0].v = part[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
-		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
-		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
-			res[1].t = part[0];
-			res[1].v = part[1] - '0';
+		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			res[0].v = strtol(getEQU(part),&end,0);
 		}
-		else { /* it's only a konstant */
-			res[1].t = 'K';
-			res[1].v = atoi(part);
+
+		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
+		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
+			res[0].t = part[0];
+			res[0].v = part[1] - '0';
+		}
+		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+			res[0].t = 'K';
+			res[0].v = atoi(part);
+		}
+		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			res[0].v = strtol(getEQU(part),&end,0);
 		}
 	}
 
@@ -452,12 +478,12 @@ char* convOpcode(char opc[], char arg[]) {
 					if (arg_parsed[i].t == 'K') {
 						if (isK == 1) { /* the other arg is a K too */
 							kVal += arg_parsed[i].v;
-							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+							strcat(k_temp, tobinstr(kVal, 18));
 						}
 						else if (isK == 0) {
 							isK = 1;
 							kVal = arg_parsed[i].v;
-							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+							strcat(k_temp, tobinstr(kVal, 18));
 						}
 						strcat(k_res, k_temp);
 					}
@@ -557,7 +583,7 @@ char* convOpcode(char opc[], char arg[]) {
 					if (arg_parsed[i].t == 'K') {
 						if (isK == 1) { /* the other arg is a K too */
 							kVal += arg_parsed[i].v;
-							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+							strcat(k_temp, tobinstr(kVal, 18));
 						}
 						else if (isK == 0) {
 							isK = 1;
@@ -1008,12 +1034,12 @@ int main() {
 			} else if (getEQU(label) == NULL) { // this is an EQUated constant
 				memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
 				strcat(equTable[numEQU], "|");
-				strcat(equTable[numEQU], tobinstr(atoi(argument), 18));
+				strcat(equTable[numEQU], removeZeros(tobinstr(atoi(argument), 18)));
 				numEQU++;
 				printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
 			}
 		}
-		printf("OPC (len : %zd) is : %s| (oct: %s)\n", strlen(opcode), opcode, tooctstring(SB,6));
+		printf("OPC (len : %zd) is : %s|\n", strlen(opcode), opcode);
 
 		if (noArg) {
 			printf("NO ARGUMENT\n");
