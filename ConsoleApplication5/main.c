@@ -990,6 +990,61 @@ int main() {
 	}
 
 	/* analyzing asm file */
+	/* first pass */
+	while (fgets(line, sizeof line, filn) != NULL) {
+		ll = strnlen_s(line, sizeof line);
+		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
+		memcpy_s(label, 8, line + 1, 7);
+		for (i = 0; i < strlen(label); i++) {
+			if (isspace(label[i])) {
+				label[i] = '\0';
+				break;
+			}
+		}
+		memcpy_s(opcode, 8, line + 10, 7);
+
+		if (ll >= 18) {
+			memcpy_s(argument, 12, line + 17, 11);
+			if (ll >= 29) {
+				memcpy_s(comment, 50, line + 28, 49);
+				comment[strlen(comment) - 1] = '\0';
+			}
+			argument[strlen(argument) - 1] = '\0';
+		}
+		else {
+			opcode[strlen(opcode) - 1] = '\0';
+		}
+
+		/* checks the results */
+		noLabel = isEmpty(label);
+		noComment = isEmpty(comment);
+		noArg = isEmpty(argument);
+		t_opc = removeSpace(opcode);
+
+		if (noLabel) {
+			printf("NO LABEL\n");
+		}
+		else {
+			if (memcmp(t_opc, "EQU", strlen(t_opc)) != 0) {
+				if (findLabel(label) < 0) { // this is a new LABEL
+					memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
+					memTable[numLabels] = START_ADDRESS + numLabels;
+					numLabels++;
+					printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
+				}
+			}
+			else if (getEQU(label) == NULL) { // this is an EQUated constant
+				memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
+				strcat(equTable[numEQU], "|");
+				strcat(equTable[numEQU], removeZeros(tobinstr(atoi(argument), 18)));
+				numEQU++;
+				printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
+			}
+		}
+	}
+	rewind(filn);
+	resetReading();
+
 	while (fgets(line,sizeof line,filn) != NULL) {
 		ll = strnlen_s(line, sizeof line);
 		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
@@ -1015,30 +1070,11 @@ int main() {
 		}
 		
 		/* checks the results */
-		noLabel = isEmpty(label);
+		
 		noComment = isEmpty(comment);
 		noArg = isEmpty(argument);
 		t_opc = removeSpace(opcode);
 
-		if (noLabel) {
-			printf("NO LABEL\n");
-		}
-		else {
-			if (memcmp(t_opc, "EQU", strlen(t_opc)) != 0) {
-				if (findLabel(label) < 0) { // this is a new LABEL
-					memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
-					memTable[numLabels] = START_ADDRESS + numLabels;
-					numLabels++;
-					printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
-				}
-			} else if (getEQU(label) == NULL) { // this is an EQUated constant
-				memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
-				strcat(equTable[numEQU], "|");
-				strcat(equTable[numEQU], removeZeros(tobinstr(atoi(argument), 18)));
-				numEQU++;
-				printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
-			}
-		}
 		printf("OPC (len : %zd) is : %s|\n", strlen(opcode), opcode);
 
 		if (noArg) {
