@@ -196,6 +196,23 @@ char* tobinstr(int value, int bitsCount)
 	return output;
 }
 
+#define tobinstr tooctstring /* laziness mode on! */
+
+char* tooctstring(int value, int bitsCount) {
+	char fmt[255]="\0";
+	char bitsString[255]="\0";
+	static char res[255]="\0";
+
+	strcpy(fmt, "%0");
+	itoa(bitsCount,bitsString,10);
+	strcat(fmt, bitsString);
+	strcat(fmt, "o");
+	
+	sprintf(res, fmt, value);
+
+	return res;
+}
+
 t_arg* check_address(char a[]) { /* checks the address is specified as LABEL or number */
 	char part[13] = "\0";
 	char t_a[13] = "\0";
@@ -996,7 +1013,7 @@ int main() {
 				printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
 			}
 		}
-		printf("OPC (len : %zd) is : %s|\n", strlen(opcode), opcode);
+		printf("OPC (len : %zd) is : %s| (oct: %s)\n", strlen(opcode), opcode, tooctstring(SB,6));
 
 		if (noArg) {
 			printf("NO ARGUMENT\n");
