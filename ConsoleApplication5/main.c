@@ -21,12 +21,12 @@ char comment[51] = "\0";
 char ou[255] = "\0";
 
 
-char symbTable[MAX_LABELS][10] = { "\0" }; /* max 255 labels, the address of that LABEL is in memTable at index findLabel(<label>) */
+char symbTable[MAX_LABELS][10] = { "\0" }; /* max 255 labels, the address of that LABEL is in memTable at index findLabel(<label>)     */
 int memTable[MAX_LABELS] = { 0 };
 
-char equTable[MAX_LABELS][7] = { "\0" }; /* max 255 EQUated constants : string fromat : <EQUNAME>|<EQUVAL> where EQUVAL is max 18bit */
-                                          /*                                                                      EQUNAME is max 9    */
-                                          /* STORED IN OCTAL                                                                          */
+char equTable[MAX_LABELS][7] = { "\0" };   /* max 255 EQUated constants : string fromat : <EQUNAME>|<EQUVAL> where EQUVAL is max 18bit */
+                                           /*                                                                      EQUNAME is max 9    */
+                                           /* STORED IN OCTAL                                                                          */
 int noLabel = 1; /* boolean value */
 int noArg = 1; /* boolean value */
 int noComment = 1; /* boolean value */
@@ -67,8 +67,11 @@ char* removeSpace(char t[]) {
 }
 
 char* removeZeros(char t[]) {
-	char* tt = strrchr(t, '0');
-	return tt;
+	while (t[0] == '0') t++;
+	char res[8] = "\0";
+	strcat(res, "0");
+	strcat(res, t);
+	return res;
 }
 
 int isEmpty(char t[]) {
@@ -104,6 +107,7 @@ void resetReading() {
 	memset(argument, 0, sizeof argument);
 	memset(comment, 0, sizeof comment);
 	memset(ou, 0, sizeof ou);
+	memset(line, 0, sizeof line);
 }
 
 int findLabel(char s1[]) {
@@ -305,6 +309,7 @@ t_arg* check_arg_min(char a[]) {
 	char part[13] = "\0";
 	char t_a[13] = "\0";
 	char t_a1[13] = "\0";
+	char tt[60] = "\0";
 	static t_arg res[2];
 	char* end;
 
@@ -324,7 +329,7 @@ t_arg* check_arg_min(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtol(getEQU(t_a),&end,0);
+			res[0].v = strtoll(getEQU(t_a), &end, 0);
 		}
 	}
 	else { /* there two parts */
@@ -339,7 +344,7 @@ t_arg* check_arg_min(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtol(getEQU(part),&end,0);
+			res[0].v = strtol(getEQU(part), &end, 0);
 		}
 
 		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
@@ -353,7 +358,7 @@ t_arg* check_arg_min(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtol(getEQU(part),&end,0);
+			res[0].v = strtol(getEQU(part), &end, 0);
 		}
 	}
 
@@ -1033,7 +1038,7 @@ int main() {
 					printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
 				}
 			}
-			else if (getEQU(label) == NULL) { // this is an EQUated constant
+			else if (getEQU(label) == NULL) { // this is an new EQUated constant
 				memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
 				strcat(equTable[numEQU], "|");
 				strcat(equTable[numEQU], removeZeros(tobinstr(atoi(argument), 18)));
