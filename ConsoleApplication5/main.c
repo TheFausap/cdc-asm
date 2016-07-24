@@ -253,11 +253,11 @@ t_arg* check_arg_plus(char a[]) {
 	static t_arg res[2];
 	char* end;
 	
-	memcpy(t_a, a, sizeof t_a);
-	memcpy(t_a1, a, sizeof t_a1);
+	memcpy(t_a, a, sizeof t_a); /* used in strtok. modified by the function! */
+	memcpy(t_a1, a, sizeof t_a1); /* original copy of the argument */
 
 	strcpy(part,strtok(t_a, "+"));
-	if (strcmp(part,t_a) == 0) return NULL;
+	if (strcmp(part,t_a1) == 0) return NULL;
 	if (memcmp(part,t_a1,strlen(t_a1)) == 0) { /* no addition in the arg */
 		res[0].n = 1;
 		if ((strlen(t_a) == 2) && (isReg(t_a[0])>0)) { /* it's a registry */
