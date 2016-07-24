@@ -257,6 +257,7 @@ t_arg* check_arg_plus(char a[]) {
 	memcpy(t_a1, a, sizeof t_a1);
 
 	strcpy(part,strtok(t_a, "+"));
+	if (strcmp(part,t_a) == 0) return NULL;
 	if (memcmp(part,t_a1,strlen(t_a1)) == 0) { /* no addition in the arg */
 		res[0].n = 1;
 		if ((strlen(t_a) == 2) && (isReg(t_a[0])>0)) { /* it's a registry */
@@ -448,6 +449,7 @@ char* convOpcode(char opc[], char arg[]) {
 		}
 		else if (memcmp(t_opc, "SA", strlen(t_opc)) == 0) { // SA
 			arg_parsed = check_arg_plus(arg);
+			if (arg_parsed == NULL) goto argminSA;
 			memcpy(t_idx, opc + 2, 1);     // SAi
 			if (arg_parsed[0].n == 1) {
 				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 : SAi [B0] + K*/
@@ -550,9 +552,218 @@ char* convOpcode(char opc[], char arg[]) {
 				}
 				return l_res;
 			}
+argminSA:
+			arg_parsed = check_arg_min(arg);
+			memcpy(t_idx, opc + 2, 1);     // SAi
+			if (arg_parsed[0].n == 1) {
+				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 : SAi [B0] + K*/
+					strcat(l_res, tobinstr(SA + 1, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, ZERO3);
+					strcat(l_res, tobinstr(arg_parsed[0].v, 18));
+				}
+				else {
+					if (arg_parsed[0].t == 'A') { // SAi Aj + [B0]
+						strcat(l_res, tobinstr(SA + 4, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
+					}
+					else if (arg_parsed[0].t == 'B') { // SAi [B0] + Bk
+						strcat(l_res, tobinstr(SA + 6, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, ZERO3);
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+					}
+					else if (arg_parsed[0].t == 'X') { // SAi Xj + [B0]
+						strcat(l_res, tobinstr(SA + 3, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
+					}
+				}
+				return l_res;
+			}
+			else { /* there are two operands */
+				for (i = 0; i < arg_parsed[0].n; i++) {
+					if (arg_parsed[i].t == 'K') {
+						if (isK == 1) { /* the other arg is a K too */
+							kVal += arg_parsed[i].v;
+							strcat(k_temp, tobinstr(kVal, 18));
+						}
+						else if (isK == 0) {
+							isK = 1;
+							kVal = arg_parsed[i].v;
+							strcat(k_temp, tobinstr(kVal, 18));
+						}
+						strcat(k_res, k_temp);
+					}
+					else if (arg_parsed[i].t == 'A') {
+						isA = 1;
+						strcat(a_res, tobinstr(arg_parsed[i].v, 3));
+					}
+					else if (arg_parsed[i].t == 'B') { /* could be two B regs */
+						isB = 1;
+						strcat(b_res[ic], tobinstr(arg_parsed[i].v, 3));
+						ic++;
+					}
+					else if (arg_parsed[i].t == 'X') {
+						isX = 1;
+						strcat(x_res, tobinstr(arg_parsed[i].v, 3));
+					}
+				}
+				if (isA && isK) {
+					add_opc = 0;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, k_res);
+				}
+				else if (isB && isK) {
+					add_opc = 1;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isK) {
+					add_opc = 2;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isB) {
+					add_opc = 3;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isA && isB) {
+					add_opc = 4;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isB) {
+					add_opc = 6;
+					strcat(l_res, tobinstr(SA + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, b_res[1]);
+				}
+				return l_res;
+			}
 		}
 		else if (memcmp(t_opc, "SB", strlen(t_opc)) == 0) {
 			arg_parsed = check_arg_plus(arg);
+			if (arg_parsed == NULL) goto argminSB;
+			memcpy(t_idx, opc + 2, 1);     // SAi
+			if (arg_parsed[0].n == 1) {
+				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 : SAi [B0] + K*/
+					strcat(l_res, tobinstr(SB + 1, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, ZERO3);
+					strcat(l_res, tobinstr(arg_parsed[0].v, 18));
+				}
+				else {
+					if (arg_parsed[0].t == 'A') { // SAi Aj + [B0]
+						strcat(l_res, tobinstr(SB + 4, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
+					}
+					else if (arg_parsed[0].t == 'B') { // SAi [B0] + Bk
+						strcat(l_res, tobinstr(SB + 6, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, ZERO3);
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+					}
+					else if (arg_parsed[0].t == 'X') { // SAi Xj + [B0]
+						strcat(l_res, tobinstr(SB + 3, 6));
+						strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+						strcat(l_res, tobinstr(arg_parsed[0].v, 3));
+						strcat(l_res, ZERO3);
+					}
+				}
+				return l_res;
+			}
+			else { /* there are two operands */
+				for (i = 0; i < arg_parsed[0].n; i++) {
+					if (arg_parsed[i].t == 'K') {
+						if (isK == 1) { /* the other arg is a K too */
+							kVal += arg_parsed[i].v;
+							strcat(k_temp, tobinstr(kVal, 18));
+						}
+						else if (isK == 0) {
+							isK = 1;
+							kVal = arg_parsed[i].v;
+							strcat(k_temp, tobinstr(arg_parsed[i].v, 18));
+						}
+						strcat(k_res, k_temp);
+					}
+					else if (arg_parsed[i].t == 'A') {
+						isA = 1;
+						strcat(a_res, tobinstr(arg_parsed[i].v, 3));
+					}
+					else if (arg_parsed[i].t == 'B') { /* could be two B regs */
+						isB = 1;
+						strcat(b_res[ic], tobinstr(arg_parsed[i].v, 3));
+						ic++;
+					}
+					else if (arg_parsed[i].t == 'X') {
+						isX = 1;
+						strcat(x_res, tobinstr(arg_parsed[i].v, 3));
+					}
+				}
+				if (isA && isK) {
+					add_opc = 0;
+					strcat(l_res, tobinstr(SB + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, k_res);
+				}
+				else if (isB && isK) {
+					add_opc = 1;
+					strcat(l_res, tobinstr(SB + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isK) {
+					add_opc = 2;
+					strcat(l_res, tobinstr(SB + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, k_res);
+				}
+				else if (isX && isB) {
+					add_opc = 3;
+					strcat(l_res, tobinstr(SB + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, x_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isA && isB) {
+					add_opc = 4;
+					strcat(l_res, tobinstr(SB + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, a_res);
+					strcat(l_res, b_res[0]);
+				}
+				else if (isB) {
+					add_opc = 6;
+					strcat(l_res, tobinstr(SB + add_opc, 6));
+					strcat(l_res, tobinstr(t_idx[0] - '0', 3));
+					strcat(l_res, b_res[0]);
+					strcat(l_res, b_res[1]);
+				}
+				return l_res;
+			}
+argminSB:
+			arg_parsed = check_arg_min(arg);
 			memcpy(t_idx, opc + 2, 1);     // SAi
 			if (arg_parsed[0].n == 1) {
 				if (arg_parsed[0].t == 'K') { /* only constant, supposed B0 : SAi [B0] + K*/
