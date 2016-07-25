@@ -10,7 +10,7 @@
 #define ZERO18 "000000000000000000"
 #define NOOP "777777"
 
-const int START_ADDRESS = 01000; /* octal number */
+const int START_ADDRESS = 020000; /* octal number */
 
 char line[82] = "\0";
 char firstCol[2] = "\0";
@@ -27,8 +27,8 @@ int memTable[MAX_LABELS] = { 0 };
 char equTable[MAX_LABELS][7] = { "\0" };   /* max 255 EQUated constants : string fromat : <EQUNAME>|<EQUVAL> where EQUVAL is max 18bit */
                                            /*                                                                      EQUNAME is max 9    */
                                            /* STORED IN OCTAL                                                                          */
-int noLabel = 1; /* boolean value */
-int noArg = 1; /* boolean value */
+int noLabel = 1;   /* boolean value */
+int noArg = 1;     /* boolean value */
 int noComment = 1; /* boolean value */
 
 int numLabels = 0;
@@ -290,16 +290,16 @@ t_arg* check_arg_plus(char a[]) {
 
 		strcpy(part,strtok(NULL, "+")); /* the other element (max 2)*/
 		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
-			res[0].t = part[0];
-			res[0].v = part[1] - '0';
+			res[1].t = part[0];
+			res[1].v = part[1] - '0';
 		}
 		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
-			res[0].t = 'K';
-			res[0].v = atoi(part);
+			res[1].t = 'K';
+			res[1].v = atoi(part);
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
-			res[0].t = 'K';
-			res[0].v = strtol(getEQU(part),&end,0);
+			res[1].t = 'K';
+			res[1].v = strtol(getEQU(part),&end,0);
 		}
 	}
 	
@@ -350,16 +350,16 @@ t_arg* check_arg_min(char a[]) {
 
 		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
 		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
-			res[0].t = part[0];
-			res[0].v = part[1] - '0';
+			res[1].t = part[0];
+			res[1].v = part[1] - '0';
 		}
 		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
-			res[0].t = 'K';
-			res[0].v = atoi(part);
+			res[1].t = 'K';
+			res[1].v = atoi(part);
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
-			res[0].t = 'K';
-			res[0].v = strtol(getEQU(part), &end, 0);
+			res[1].t = 'K';
+			res[1].v = strtol(getEQU(part), &end, 0);
 		}
 	}
 
