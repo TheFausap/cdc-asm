@@ -5,9 +5,9 @@
 
 #define __STDC_WANT_LIB_EXT1__ 1
 #define MAX_LABELS 255
-#define ZERO6 "000000"
-#define ZERO3 "000"
-#define ZERO18 "000000000000000000"
+#define ZERO6 "00"          /* octals (6bits) */
+#define ZERO3 "0"           /* octals (3bits) */
+#define ZERO18 "000000"     /* octals (18bits)*/
 #define NOOP "777777"
 
 const int START_ADDRESS = 020000; /* octal number */
@@ -131,7 +131,7 @@ int findLabel(char s1[]) {
 
 char* getEQU(char s1[]) {
 
-	size_t l_s1, l_s2 = 0;
+	size_t l_s1 = 0;
 	int i = 0;
 	int pos = 0;
 	char s2[30] = "\0";
@@ -142,8 +142,7 @@ char* getEQU(char s1[]) {
 	for (i = 0; i < numEQU; i++) {
 		memcpy(s2, equTable[i], 29);
 		char* t_s2 = strtok(s2, "|");
-		l_s2 = strlen(s2);
-		if (l_s1 == l_s2) {
+		if (memcmp(s1,s2,strlen(s2)) == 0) {
 			t_s2 = strtok(NULL, "|");
 			strcpy(res, t_s2);
 			return res;
