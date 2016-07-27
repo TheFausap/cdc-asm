@@ -19,6 +19,7 @@ char opcode[9] = "\0";
 char argument[13] = "\0";
 char comment[51] = "\0";
 char ou[255] = "\0";
+char program[5000][255] = { "\0" };
 
 
 char symbTable[MAX_LABELS][10] = { "\0" }; /* max 255 labels, the address of that LABEL is in memTable at index findLabel(<label>)     */
@@ -33,6 +34,7 @@ int noComment = 1; /* boolean value */
 
 int numLabels = 0;
 int numEQU = 0;
+int PC = 0;
 
 typedef struct {
 	char t;
@@ -58,6 +60,12 @@ enum opcodes {
 	NO=046,
 	IX=036, /* integer arith : 2 instr */
 	FX=030 /* short instruction 15bit */
+};
+
+enum pseudoop {
+	EQU = 80,
+	BSS = 81,
+	CON = 82
 };
 
 char* removeSpace(char t[]) {
@@ -444,7 +452,8 @@ char* convOpcode(char opc[], char arg[]) {
 	
 	if (arg != NULL) { /* the operand has argument */
 		if (memcmp(t_opc, "EQU", strlen(t_opc)) == 0) {
-			return NOOP;
+			itoa(EQU, l_res, 10);
+			return l_res;
 		}
 		else if (memcmp(t_opc, "SA", strlen(t_opc)) == 0) { // SA
 			arg_parsed = check_arg_plus(arg);
@@ -1193,9 +1202,12 @@ argminSB:
 }
 int main() {
 	FILE *filn;
+	FILE *filout;
 	fopen_s(&filn, "test.asm", "r");
+	fopen_s(&filout, "test.cdc", "w");
 	char* c_opc;
 	char* t_opc;
+	char* pline;
 	size_t i = 0;
 	size_t ll = 0;
 
@@ -1205,7 +1217,8 @@ int main() {
 	}
 
 	/* analyzing asm file */
-	/* first pass */
+
+	/* doing first pass */
 	while (fgets(line, sizeof line, filn) != NULL) {
 		ll = strnlen_s(line, sizeof line);
 		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
@@ -1296,11 +1309,19 @@ int main() {
 			printf("NO ARGUMENT\n");
 			c_opc = convOpcode(t_opc, NULL);
 			printf("Translated opcode: %s\n", c_opc);
+			if ((memcmp(c_opc,"80", 3) !=0) && (memcmp(c_opc,NOOP,strlen(NOOP))) != 0) {
+				strcpy(program[PC], c_opc);
+				PC++;
+			}
 			printf("Opcode length: %zd\n", strlen(c_opc));
 		}
 		else {
 			printf("ARG (len : %zd) is : %s|\n", strlen(argument), argument);
 			c_opc = convOpcode(t_opc, argument);
+			if ((memcmp(c_opc, "80", 3) != 0) && (memcmp(c_opc, NOOP, strlen(NOOP))) != 0) {
+				strcpy(program[PC], c_opc);
+				PC++;
+			}
 			printf("Translated opcode: %s\n", c_opc);
 			printf("Opcode length: %zd\n", strlen(c_opc));
 		}
