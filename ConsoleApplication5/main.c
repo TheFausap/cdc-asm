@@ -56,6 +56,10 @@ enum opcodes {
 	NZ=031, /* long instruction 30bit*/
 	PL=032, /* long instruction 30bit*/
 	NG=033, /* long instruction 30bit*/
+	IR=034,
+	OR=035,
+	DF=036,
+	ID=037,
 	EQ=004,
 	NE=005,
 	GE=006,
@@ -64,6 +68,16 @@ enum opcodes {
 	IX=036, /* integer arith : 2 instr */
 	FX=030 /* short instruction 15bit */
 };
+
+/* table with opcode length. opcode-number position based */
+                   /* PS  RJ  JP*/
+int tableLength[] = { 10, 10, 10, 00, 10, 10, 10, 10, 00, 00, 
+                      00, 00, 00, 00, 00, 00, 00, 00, 00, 00,
+	                  05, 05, 10, 10, 10, 10, 00, 00, 10, 10,
+	                  10, 10, 00, 00, 00, 00, 00, 00, 05, 00,
+	                  10, 10, 10, 05, 05, 05, 05, 05, 10, 10,
+	                  10, 05, 05, 05, 05, 05, 10, 10, 10, 05,
+	                  05, 05, 05, 05 };
 
 enum pseudoop {
 	EQU = 80,
@@ -1265,7 +1279,7 @@ int main() {
 
 	/* analyzing asm file */
 
-	/* doing first pass */
+	/* doing first pass - EQU definition */
 	while (fgets(line, sizeof line, filn) != NULL) {
 		ll = strnlen_s(line, sizeof line);
 		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
@@ -1300,20 +1314,61 @@ int main() {
 			printf("NO LABEL\n");
 		}
 		else {
-			if (memcmp(t_opc, "EQU", strlen(t_opc)) != 0) {
-				if (findLabel(label) < 0) { // this is a new LABEL
-					memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
-					memTable[numLabels] = START_ADDRESS + numLabels;
-					numLabels++;
-					printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
+			if (memcmp(t_opc, "EQU", strlen(t_opc)) == 0) {
+				if (getEQU(label) == NULL) { // this is an new EQUated constant
+					memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
+					strcat(equTable[numEQU], "|");
+					strcat(equTable[numEQU], removeZeros(tobinstr(atoi(argument), 18)));
+					numEQU++;
+					printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
 				}
 			}
-			else if (getEQU(label) == NULL) { // this is an new EQUated constant
-				memcpy_s(equTable[numEQU], strlen(label), label, strlen(label));
-				strcat(equTable[numEQU], "|");
-				strcat(equTable[numEQU], removeZeros(tobinstr(atoi(argument), 18)));
-				numEQU++;
-				printf("EQU constant (len : %zd) is : %s with value: %s\n", strlen(label), label, getEQU(label));
+		}
+	}
+	rewind(filn);
+	resetReading();
+
+	/* doing second pass - LABEL definition */
+
+	while (fgets(line, sizeof line, filn) != NULL) {
+		ll = strnlen_s(line, sizeof line);
+		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
+		memcpy_s(label, 8, line + 1, 7);
+		for (i = 0; i < strlen(label); i++) {
+			if (isspace(label[i])) {
+				label[i] = '\0';
+				break;
+			}
+		}
+		memcpy_s(opcode, 8, line + 10, 7);
+
+		if (ll >= 18) {
+			memcpy_s(argument, 12, line + 17, 11);
+			if (ll >= 29) {
+				memcpy_s(comment, 50, line + 28, 49);
+				comment[strlen(comment) - 1] = '\0';
+			}
+			argument[strlen(argument) - 1] = '\0';
+		}
+		else {
+			opcode[strlen(opcode) - 1] = '\0';
+		}
+
+		/* checks the results */
+		noLabel = isEmpty(label);
+		noComment = isEmpty(comment);
+		noArg = isEmpty(argument);
+		t_opc = removeSpace(opcode);
+
+		if (noLabel) {
+			printf("NO LABEL\n");
+		}
+		else {
+			if (findLabel(label) < 0) { // this is a new LABEL
+				memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
+				memTable[numLabels] = START_ADDRESS + numLabels;
+				numLabels++;
+				printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
 			}
 		}
 	}
