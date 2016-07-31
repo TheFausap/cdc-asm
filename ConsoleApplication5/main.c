@@ -169,7 +169,11 @@ char* getEQU(char s1[]) {
 }
 
 int memLabel(char l[]) {
-	return memTable[findLabel(l)];
+	int tt = findLabel(l);
+	if (tt != -1) {
+		return memTable[tt];
+	}
+	return -1;
 }
 
 void reverse_string(char *str)
@@ -414,11 +418,11 @@ t_arg* check_arg_comm(char a[]) {
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
-		else if (isalpha(part[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's a LABEL */
 			res[0].t = 'K';
-			char* tt = getEQU(part);
-			if (tt == NULL) error("WRONGLABEL");
-			res[0].v = strtol(tt, &end, 0);
+			int tt1 = memLabel(part);
+			if (tt1 == -1) error("WRONG ARGUMENT");
+			res[0].v = tt1;
 		}
 	}
 	else { /* there two parts */
@@ -431,14 +435,14 @@ t_arg* check_arg_comm(char a[]) {
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
-		else if (isalpha(part[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's a LABEL */
 			res[0].t = 'K';
-			char* tt = getEQU(part);
-			if (tt == NULL) error("WRONGLABEL");
-			res[0].v = strtol(tt, &end, 0);
+			int tt1 = memLabel(part);
+			if (tt1 == -1) error("WRONG ARGUMENT");
+			res[0].v = tt1;
 		}
 
-		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
+		strcpy(part, strtok(NULL, ",")); /* the other element (max 2)*/
 		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
 			res[1].t = part[0];
 			res[1].v = part[1] - '0';
@@ -447,11 +451,11 @@ t_arg* check_arg_comm(char a[]) {
 			res[1].t = 'K';
 			res[1].v = atoi(part);
 		}
-		else if (isalpha(part[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's a LABEL */
 			res[1].t = 'K';
-			char* tt = getEQU(part);
-			if (tt == NULL) error("WRONGLABEL");
-			res[1].v = strtol(tt, &end, 0);
+			int tt1 = memLabel(part);
+			if (tt1 == -1) error("WRONG ARGUMENT");
+			res[1].v = tt1;
 		}
 	}
 
