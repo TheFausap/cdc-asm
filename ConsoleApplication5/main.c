@@ -10,7 +10,7 @@
 #define ZERO18 "000000"     /* octals (18bits)*/
 #define NOOP "777777"
 
-const int START_ADDRESS = 020000; /* octal number */
+int START_ADDRESS = 020000; /* octal number */
 
 char line[82] = "\0";
 char firstCol[2] = "\0";
@@ -1210,6 +1210,10 @@ int main() {
 	char* pline;
 	size_t i = 0;
 	size_t ll = 0;
+	int isShort = 0;
+	int isLong = 0;
+
+	pline = malloc(255);
 
 	if (!filn) {
 		perror("File opening failed");
@@ -1336,6 +1340,38 @@ int main() {
 		// cleaning for the next ride...
 		resetReading();
 	}
+	printf("writing output file...\n");
+	for (i = 0; i < PC; i++) {
+		if ((isShort == 0) && (isLong == 0)) _itoa(START_ADDRESS, pline, 8);
+		if (strlen(program[i]) == 10) {     /* long instruction opcode 30bits */
+			if (isShort >= 1) {
+				fprintf(filout, "%s\n", pline);
+				isShort = 0;
+			}
+			if (isLong == 1) {              /* get the second long instruction: PRINT THEM! */
+				strcat(pline, program[i]);
+				fprintf(filout, "%s\n", pline);
+				START_ADDRESS++;
+				isLong = 0;
+			}
+			else {
+				strcat(pline, program[i]);
+				isLong++;
+			}
+		}
+		else if (strlen(program[i]) == 5) { /* short instruction opcode 15bits */
+			if (strlen(pline) + 5 == 20) {
+				strcat(pline, program[i]);
+				fprintf(filout, "%s\n", pline);
+				isShort = 0;
+			}
+			else {
+				strcat(pline, program[i]);
+				isShort++;
+			}
+		}
+	}
 	printf("done!\n");
 	fclose(filn);
+	fclose(filout);
 }

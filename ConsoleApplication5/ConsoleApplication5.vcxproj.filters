@@ -26,5 +26,8 @@
     <None Include="test.asm">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="test.cdc">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
