@@ -12,6 +12,9 @@
 
 int START_ADDRESS = 020000; /* octal number */
 
+FILE *filn;
+FILE *filout;
+
 char line[82] = "\0";
 char firstCol[2] = "\0";
 char label[9] = "\0";
@@ -67,6 +70,13 @@ enum pseudoop {
 	BSS = 81,
 	CON = 82
 };
+
+void error(char* t) {
+	fclose(fileno);
+	fclose(filn);
+	printf("%s -- Aborting execution\n", t);
+	abort();
+}
 
 char* removeSpace(char t[]) {
 	char* tt1 = strdup(t);
@@ -277,7 +287,9 @@ t_arg* check_arg_plus(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtoll(getEQU(t_a),&end,0);
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[0].v = strtol(tt, &end, 0);
  		}
 	}
 	else { /* there two parts */
@@ -292,7 +304,9 @@ t_arg* check_arg_plus(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtol(getEQU(part),&end,0);
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[0].v = strtol(tt, &end, 0);
  		}
 
 		strcpy(part,strtok(NULL, "+")); /* the other element (max 2)*/
@@ -306,7 +320,9 @@ t_arg* check_arg_plus(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[1].t = 'K';
-			res[1].v = strtol(getEQU(part),&end,0);
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[1].v = strtol(tt, &end, 0);
 		}
 	}
 	
@@ -337,7 +353,9 @@ t_arg* check_arg_min(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtoll(getEQU(t_a), &end, 0);
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[0].v = strtol(tt, &end, 0);
 		}
 	}
 	else { /* there two parts */
@@ -352,7 +370,9 @@ t_arg* check_arg_min(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
-			res[0].v = strtol(getEQU(part), &end, 0);
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[0].v = strtol(tt, &end, 0);
 		}
 
 		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
@@ -366,7 +386,9 @@ t_arg* check_arg_min(char a[]) {
 		}
 		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
 			res[1].t = 'K';
-			res[1].v = strtol(getEQU(part), &end, 0);
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[1].v = strtol(tt, &end, 0);
 		}
 	}
 
@@ -1201,8 +1223,7 @@ argminSB:
 	}
 }
 int main() {
-	FILE *filn;
-	FILE *filout;
+	
 	fopen_s(&filn, "test.asm", "r");
 	fopen_s(&filout, "test.cdc", "w");
 	char* c_opc;
