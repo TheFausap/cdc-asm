@@ -72,8 +72,6 @@ enum pseudoop {
 };
 
 void error(char* t) {
-	fclose(fileno);
-	fclose(filn);
 	printf("%s -- Aborting execution\n", t);
 	abort();
 }
@@ -277,15 +275,15 @@ t_arg* check_arg_plus(char a[]) {
 	if (strcmp(part,t_a1) == 0) return NULL;
 	if (memcmp(part,t_a1,strlen(t_a1)) == 0) { /* no addition in the arg */
 		res[0].n = 1;
-		if ((strlen(t_a) == 2) && (isReg(t_a[0])>0)) { /* it's a registry */
-			res[0].t = t_a[0];
-			res[0].v = t_a[1] - '0';
+		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
+			res[0].t = part[0];
+			res[0].v = part[1] - '0';
 		}
-		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
-			res[0].v = atoi(t_a);
+			res[0].v = atoi(part);
 		}
-		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
 			char* tt = getEQU(part);
 			if (tt == NULL) error("WRONGLABEL");
@@ -298,11 +296,11 @@ t_arg* check_arg_plus(char a[]) {
 			res[0].t = part[0];
 			res[0].v = part[1] - '0';
 		}
-		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
-		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
 			char* tt = getEQU(part);
 			if (tt == NULL) error("WRONGLABEL");
@@ -314,11 +312,11 @@ t_arg* check_arg_plus(char a[]) {
 			res[1].t = part[0];
 			res[1].v = part[1] - '0';
 		}
-		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[1].t = 'K';
 			res[1].v = atoi(part);
 		}
-		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
 			res[1].t = 'K';
 			char* tt = getEQU(part);
 			if (tt == NULL) error("WRONGLABEL");
@@ -343,15 +341,15 @@ t_arg* check_arg_min(char a[]) {
 	strcpy(part, strtok(t_a, "-"));
 	if (memcmp(part, t_a1, strlen(t_a1)) == 0) { /* no addition in the arg */
 		res[0].n = 1;
-		if ((strlen(t_a) == 2) && (isReg(t_a[0])>0)) { /* it's a registry */
-			res[0].t = t_a[0];
-			res[0].v = t_a[1] - '0';
+		if ((strlen(part) == 2) && (isReg(part[0])>0)) { /* it's a registry */
+			res[0].t = part[0];
+			res[0].v = part[1] - '0';
 		}
-		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
-			res[0].v = atoi(t_a);
+			res[0].v = atoi(part);
 		}
-		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
 			char* tt = getEQU(part);
 			if (tt == NULL) error("WRONGLABEL");
@@ -364,11 +362,11 @@ t_arg* check_arg_min(char a[]) {
 			res[0].t = part[0];
 			res[0].v = part[1] - '0';
 		}
-		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
-		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
 			res[0].t = 'K';
 			char* tt = getEQU(part);
 			if (tt == NULL) error("WRONGLABEL");
@@ -380,11 +378,11 @@ t_arg* check_arg_min(char a[]) {
 			res[1].t = part[0];
 			res[1].v = part[1] - '0';
 		}
-		else if (isdigit(t_a[0])) { /* it's only a numeric konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[1].t = 'K';
 			res[1].v = atoi(part);
 		}
-		else if (isalpha(t_a[0])) { /* it's an EQUated konstant */
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
 			res[1].t = 'K';
 			char* tt = getEQU(part);
 			if (tt == NULL) error("WRONGLABEL");
@@ -400,6 +398,7 @@ t_arg* check_arg_comm(char a[]) {
 	char t_a[13] = "\0";
 	char t_a1[13] = "\0";
 	static t_arg res[2];
+	char* end;
 
 	memcpy(t_a, a, sizeof t_a);
 	memcpy(t_a1, a, sizeof t_a1);
@@ -407,13 +406,19 @@ t_arg* check_arg_comm(char a[]) {
 	strcpy(part, strtok(t_a, ","));
 	if (memcmp(part, t_a1, strlen(t_a1)) == 0) { /* no commer in the arg */
 		res[0].n = 1;
-		if ((strlen(t_a) == 2) && isalpha(t_a[0])) { /* it's a registry */
-			res[0].t = t_a[0];
-			res[0].v = t_a[1] - '0';
+		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
+			res[0].t = part[0];
+			res[0].v = part[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
-			res[0].v = atoi(t_a);
+			res[0].v = atoi(part);
+		}
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[0].v = strtol(tt, &end, 0);
 		}
 	}
 	else { /* there two parts */
@@ -422,18 +427,31 @@ t_arg* check_arg_comm(char a[]) {
 			res[0].t = part[0];
 			res[0].v = part[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[0].t = 'K';
 			res[0].v = atoi(part);
 		}
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
+			res[0].t = 'K';
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[0].v = strtol(tt, &end, 0);
+		}
+
 		strcpy(part, strtok(NULL, "-")); /* the other element (max 2)*/
 		if ((strlen(part) == 2) && isalpha(part[0])) { /* it's a registry */
 			res[1].t = part[0];
 			res[1].v = part[1] - '0';
 		}
-		else { /* it's only a konstant */
+		else if (isdigit(part[0])) { /* it's only a numeric konstant */
 			res[1].t = 'K';
 			res[1].v = atoi(part);
+		}
+		else if (isalpha(part[0])) { /* it's an EQUated konstant */
+			res[1].t = 'K';
+			char* tt = getEQU(part);
+			if (tt == NULL) error("WRONGLABEL");
+			res[1].v = strtol(tt, &end, 0);
 		}
 	}
 
