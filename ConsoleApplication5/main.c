@@ -69,6 +69,30 @@ enum opcodes {
 	FX=030 /* short instruction 15bit */
 };
 
+int getOp(char* s) {
+	if (strncmp(s, "PS",2) == 0) return PS;
+	if (strncmp(s, "RJ",2) == 0) return RJ;
+	if (strncmp(s, "SB",2) == 0) return SB;
+	if (strncmp(s, "SA",2) == 0) return SA;
+	if (strncmp(s, "SX", 2) == 0) return SX;
+	if (strncmp(s, "EQ", strlen(s)) == 0) return EQ;
+	if (strncmp(s, "NE", 2) == 0) return NE;
+	if (strncmp(s, "NO", 2) == 0) return NO;
+	if (strncmp(s, "GE", 2) == 0) return GE;
+	if (strncmp(s, "LT", 2) == 0) return LT;
+	if (strncmp(s, "IX", 2) == 0) return IX;
+	if (strncmp(s, "FX", 2) == 0) return FX;
+	if (strncmp(s, "ID", 2) == 0) return ID;
+	if (strncmp(s, "DF", 2) == 0) return DF;
+	if (strncmp(s, "IR", 2) == 0) return IR;
+	if (strncmp(s, "OR", 2) == 0) return OR;
+	if (strncmp(s, "ZR", 2) == 0) return ZR;
+	if (strncmp(s, "NZ", 2) == 0) return NZ;
+	if (strncmp(s, "PL", 2) == 0) return PL;
+	if (strncmp(s, "NG", 2) == 0) return NG;
+	return 80;
+}
+
 /* table with opcode length. opcode-number position based */
                    /* PS  RJ  JP*/
 int tableLength[] = { 10, 10, 10, 00, 10, 10, 10, 10, 00, 00, 
@@ -82,7 +106,9 @@ int tableLength[] = { 10, 10, 10, 00, 10, 10, 10, 10, 00, 00,
 enum pseudoop {
 	EQU = 80,
 	BSS = 81,
-	CON = 82
+	CON = 82,
+	ASCENT = 83,
+	END = 84
 };
 
 void error(char* t) {
@@ -1269,6 +1295,9 @@ int main() {
 	size_t ll = 0;
 	int isShort = 0;
 	int isLong = 0;
+	int totalbits = 0;
+	int countline = 0;
+	int isReset = 0;
 
 	pline = malloc(255);
 
@@ -1331,6 +1360,7 @@ int main() {
 	/* doing second pass - LABEL definition */
 
 	while (fgets(line, sizeof line, filn) != NULL) {
+		countline++;
 		ll = strnlen_s(line, sizeof line);
 		memcpy_s(firstCol, 1, line, 1); /* skip first col... maybe for future usage */
 		memcpy_s(label, 8, line + 1, 7);
@@ -1362,18 +1392,37 @@ int main() {
 
 		if (noLabel) {
 			printf("NO LABEL\n");
+			int tt1 = getOp(t_opc);
+			if (tt1 < 80) {
+				totalbits += tableLength[tt1];
+				if (totalbits >= 20) {
+					START_ADDRESS++;
+					totalbits = 0;
+					isReset = 1;
+				}
+			}
 		}
 		else {
-			if (findLabel(label) < 0) { // this is a new LABEL
-				memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));
-				memTable[numLabels] = START_ADDRESS + numLabels;
-				numLabels++;
-				printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
+			if (findLabel(label) < 0) { // this is a new LABEL, we got a new memory location!
+				int tt1 = getOp(t_opc);
+				if (tt1 < 80) {
+					memcpy_s(symbTable[numLabels], strlen(label), label, strlen(label));					
+					if ((countline != 2) && (isReset == 0)) START_ADDRESS++;
+					totalbits = tableLength[tt1];
+					memTable[numLabels] = START_ADDRESS;
+					numLabels++;
+					isReset = 0;
+					printf("LAB (len : %zd) is : %s, poiting at address : %zd\n", strlen(label), label, memLabel(label));
+				}
 			}
 		}
 	}
 	rewind(filn);
 	resetReading();
+
+	
+
+	/* now convert the opcodes in something useful */
 
 	while (fgets(line,sizeof line,filn) != NULL) {
 		ll = strnlen_s(line, sizeof line);
@@ -1404,6 +1453,7 @@ int main() {
 		noComment = isEmpty(comment);
 		noArg = isEmpty(argument);
 		t_opc = removeSpace(opcode);
+		noLabel = isEmpty(label);
 
 		printf("OPC (len : %zd) is : %s|\n", strlen(opcode), opcode);
 
@@ -1412,7 +1462,14 @@ int main() {
 			c_opc = convOpcode(t_opc, NULL);
 			printf("Translated opcode: %s\n", c_opc);
 			if ((memcmp(c_opc,"80", 3) !=0) && (memcmp(c_opc,NOOP,strlen(NOOP))) != 0) {
-				strcpy(program[PC], c_opc);
+				if (noLabel) {
+					strcpy(program[PC], c_opc);
+					strcat(program[PC], "N");
+				}
+				else {
+					strcpy(program[PC], c_opc);
+					strcat(program[PC], "L");
+				};
 				PC++;
 			}
 			printf("Opcode length: %zd\n", strlen(c_opc));
@@ -1421,7 +1478,15 @@ int main() {
 			printf("ARG (len : %zd) is : %s|\n", strlen(argument), argument);
 			c_opc = convOpcode(t_opc, argument);
 			if ((memcmp(c_opc, "80", 3) != 0) && (memcmp(c_opc, NOOP, strlen(NOOP))) != 0) {
-				strcpy(program[PC], c_opc);
+				if (noLabel) {
+					strcpy(program[PC], c_opc);
+					strcat(program[PC], "N");
+
+				}
+				else {
+					strcpy(program[PC], c_opc);
+					strcat(program[PC], "L");
+				};
 				PC++;
 			}
 			printf("Translated opcode: %s\n", c_opc);
@@ -1438,36 +1503,42 @@ int main() {
 		// cleaning for the next ride...
 		resetReading();
 	}
+
+	START_ADDRESS = 020000;
+
 	printf("writing output file...\n");
 	for (i = 0; i < PC; i++) {
+		if ((i != 0) && (program[i][strlen(program[i])-1] == 'L')) START_ADDRESS++;
 		if ((isShort == 0) && (isLong == 0)) _itoa(START_ADDRESS, pline, 8);
-		if (strlen(program[i]) == 10) {     /* long instruction opcode 30bits */
+		if (strlen(program[i]) == 11) {     /* long instruction opcode 30bits */
 			if (isShort >= 1) {
 				fprintf(filout, "%s\n", pline);
 				isShort = 0;
 			}
 			if (isLong == 1) {              /* get the second long instruction: PRINT THEM! */
-				strcat(pline, program[i]);
+				strncat(pline, program[i],strlen(program[i])-1);
 				fprintf(filout, "%s\n", pline);
 				START_ADDRESS++;
 				isLong = 0;
 			}
 			else {
-				strcat(pline, program[i]);
+				strncat(pline, program[i],strlen(program[i])-1);
 				isLong++;
 			}
 		}
-		else if (strlen(program[i]) == 5) { /* short instruction opcode 15bits */
-			if (strlen(pline) + 5 == 20) {
-				strcat(pline, program[i]);
+		else if (strlen(program[i]) == 6) { /* short instruction opcode 15bits */
+			if (strlen(pline) + 5 == 26) {
+				strncat(pline, program[i],strlen(program[i])-1);
 				fprintf(filout, "%s\n", pline);
+				START_ADDRESS++;
 				isShort = 0;
 			}
 			else {
-				strcat(pline, program[i]);
+				strncat(pline, program[i],strlen(program[i])-1);
 				isShort++;
 			}
 		}
+		if (i + 1 == PC) fprintf(filout, "%s\n", pline);
 	}
 	printf("done!\n");
 	fclose(filn);
