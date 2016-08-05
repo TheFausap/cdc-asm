@@ -1508,7 +1508,19 @@ int main() {
 
 	printf("writing output file...\n");
 	for (i = 0; i < PC; i++) {
-		if ((i != 0) && (program[i][strlen(program[i])-1] == 'L')) START_ADDRESS++;
+		if ((i != 0) && (program[i][strlen(program[i]) - 1] == 'L')) {
+			if ((isShort == 0) && (isLong == 0)) {
+				START_ADDRESS++;
+			}
+			else {
+				fprintf(filout, "%s\n", pline); /* flush the prev buffer because a new line */
+											    /* with new label.                          */
+				START_ADDRESS++;
+				isShort = 0;
+				isLong = 0;
+			}
+		}
+		if ((isShort == 0) && (isLong == 0) && (program[i][strlen(program[i]) - 1] == 'N')) START_ADDRESS++;
 		if ((isShort == 0) && (isLong == 0)) _itoa(START_ADDRESS, pline, 8);
 		if (strlen(program[i]) == 11) {     /* long instruction opcode 30bits */
 			if (isShort >= 1) {
@@ -1518,7 +1530,7 @@ int main() {
 			if (isLong == 1) {              /* get the second long instruction: PRINT THEM! */
 				strncat(pline, program[i],strlen(program[i])-1);
 				fprintf(filout, "%s\n", pline);
-				START_ADDRESS++;
+				// START_ADDRESS++;
 				isLong = 0;
 			}
 			else {
