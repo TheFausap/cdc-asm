@@ -6,6 +6,7 @@
           ZR     X7,START1
           SB7    B7-B1
  SUB2     SA3    A3+B1
+          PS
  TAG      EQU    1000
  SYMBOL   EQU    2400
           END

@@ -1255,7 +1255,7 @@ argminSB:
 			return SX + (t_idx[0] - '0');
 		}
 		else if (memcmp(t_opc, "PS", strlen(t_opc)) == 0) {
-			return "000000000000000000000000000000";
+			return "0000000000";
 		}
 		else if (memcmp(t_opc, "NG", strlen(t_opc)) == 0) {
 			return NG;
@@ -1273,7 +1273,7 @@ argminSB:
 			return EQ;
 		}
 		else if (memcmp(t_opc, "NO", strlen(t_opc)) == 0) {
-			return "100110000000000";
+			return "04600";
 		}
 		else if (memcmp(t_opc, "IX", strlen(t_opc)) == 0) {
 			return IX;
